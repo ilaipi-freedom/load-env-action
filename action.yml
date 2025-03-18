@@ -1,0 +1,38 @@
+name: 'Load Environment Variables'
+description: 'Load environment variables from a secret or a given string.'
+branding:
+  icon: 'file-text'
+  color: 'blue'
+
+inputs:
+  env_content:
+    description: 'Content of environment variables, defaults to reading from a secret.'
+    required: false
+    default: ${{ secrets.ENV }}
+  secret_name:
+    description: 'Name of the secret to read from if env_content is not provided.'
+    required: false
+    default: 'ENV'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Resolve env_content
+      id: resolve_env
+      shell: bash
+      run: |
+        if [[ -z "${{ inputs.env_content }}" ]]; then
+          echo "env_content=${{ secrets[inputs.secret_name] }}" >> $GITHUB_OUTPUT
+        else
+          echo "env_content=${{ inputs.env_content }}" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Write .env file
+      shell: bash
+      run: |
+        echo "${{ steps.resolve_env.outputs.env_content }}" > .env
+
+    - name: Load .env file
+      uses: xom9ikk/dotenv@v2.3.0
+      with:
+        load-mode: strict
