@@ -8,11 +8,19 @@ inputs:
   env_content:
     description: 'Content of environment variables, defaults to reading from a secret.'
     required: false
-    default: ${{ secrets.ENV }}
+    default: ''
   secret_name:
     description: 'Name of the secret to read from if env_content is not provided.'
     required: false
     default: 'ENV'
+  load_mode:
+    description: 'Sets whether the program should fail when no env content is found (strict) or continue (skip)'
+    required: false
+    default: 'strict'
+    type: choice
+    options:
+      - strict
+      - skip
 
 runs:
   using: "composite"
@@ -21,18 +29,36 @@ runs:
       id: resolve_env
       shell: bash
       run: |
-        if [[ -z "${{ inputs.env_content }}" ]]; then
+        if [[ -n "${{ inputs.env_content }}" ]]; then
+          echo "env_content=${{ inputs.env_content }}" >> $GITHUB_OUTPUT
+        elif [[ -n "${{ secrets[inputs.secret_name] }}" ]]; then
           echo "env_content=${{ secrets[inputs.secret_name] }}" >> $GITHUB_OUTPUT
         else
-          echo "env_content=${{ inputs.env_content }}" >> $GITHUB_OUTPUT
+          if [[ "${{ inputs.load_mode }}" == "strict" ]]; then
+            echo "Error: No environment variables found in either env_content or secret"
+            exit 1
+          else
+            echo "Warning: No environment variables found, continuing with skip mode"
+            echo "env_content=" >> $GITHUB_OUTPUT
+          fi
         fi
+
+    - name: Create temp directory
+      id: temp_dir
+      shell: bash
+      run: |
+        TEMP_DIR=$(mktemp -d)
+        echo "temp_dir=$TEMP_DIR" >> $GITHUB_OUTPUT
 
     - name: Write .env file
       shell: bash
       run: |
-        echo "${{ steps.resolve_env.outputs.env_content }}" > .env
+        if [[ -n "${{ steps.resolve_env.outputs.env_content }}" ]]; then
+          echo "${{ steps.resolve_env.outputs.env_content }}" > "${{ steps.temp_dir.outputs.temp_dir }}/.env"
+        fi
 
     - name: Load .env file
       uses: xom9ikk/dotenv@v2.3.0
       with:
-        load-mode: strict
+        load-mode: skip
+        path: ${{ steps.temp_dir.outputs.temp_dir }}/.env
