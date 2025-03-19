@@ -21,22 +21,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Resolve env_content
-      id: resolve_env
-      shell: bash
-      run: |
-        if [[ -n "${{ inputs.env_content }}" ]]; then
-          echo "env_content=${{ inputs.env_content }}" >> $GITHUB_OUTPUT
-        else
-          if [[ "${{ inputs.load_mode }}" == "strict" ]]; then
-            echo "Error: No environment variables found in env_content"
-            exit 1
-          else
-            echo "Warning: No environment variables found, continuing with skip mode"
-            echo "env_content=" >> $GITHUB_OUTPUT
-          fi
-        fi
-
     - name: Create temp directory
       id: temp_dir
       shell: bash
@@ -44,11 +28,19 @@ runs:
         TEMP_DIR=$(mktemp -d)
         echo "temp_dir=$TEMP_DIR" >> $GITHUB_OUTPUT
 
-    - name: Write .env file
+    - name: Resolve env_content
+      id: resolve_env
       shell: bash
       run: |
-        if [[ -n "${{ steps.resolve_env.outputs.env_content }}" ]]; then
-          echo "${{ steps.resolve_env.outputs.env_content }}" > "${{ steps.temp_dir.outputs.temp_dir }}/.env"
+        if [[ -n "${{ inputs.env_content }}" ]]; then
+          echo "${{ inputs.env_content }}" > "${{ steps.temp_dir.outputs.temp_dir }}/.env"
+        else
+          if [[ "${{ inputs.load_mode }}" == "strict" ]]; then
+            echo "Error: No environment variables found in env_content"
+            exit 1
+          else
+            echo "Warning: No environment variables found, continuing with skip mode"
+          fi
         fi
 
     - name: Load .env file
