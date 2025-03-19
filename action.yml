@@ -1,18 +1,14 @@
 name: 'Load Environment Variables'
-description: 'Load environment variables from a secret or a given string.'
+description: 'Load environment variables from a given string content.'
 branding:
   icon: 'file-text'
   color: 'blue'
 
 inputs:
   env_content:
-    description: 'Content of environment variables, defaults to reading from a secret.'
+    description: 'Content of environment variables.'
     required: false
     default: ''
-  secret_name:
-    description: 'Name of the secret to read from if env_content is not provided.'
-    required: false
-    default: 'ENV'
   load_mode:
     description: 'Sets whether the program should fail when no env content is found (strict) or continue (skip)'
     required: false
@@ -31,11 +27,9 @@ runs:
       run: |
         if [[ -n "${{ inputs.env_content }}" ]]; then
           echo "env_content=${{ inputs.env_content }}" >> $GITHUB_OUTPUT
-        elif [[ -n "${{ secrets[inputs.secret_name] }}" ]]; then
-          echo "env_content=${{ secrets[inputs.secret_name] }}" >> $GITHUB_OUTPUT
         else
           if [[ "${{ inputs.load_mode }}" == "strict" ]]; then
-            echo "Error: No environment variables found in either env_content or secret"
+            echo "Error: No environment variables found in env_content"
             exit 1
           else
             echo "Warning: No environment variables found, continuing with skip mode"
