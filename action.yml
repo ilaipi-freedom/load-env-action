@@ -55,4 +55,4 @@ runs:
       uses: xom9ikk/dotenv@v2.3.0
       with:
         load-mode: skip
-        path: ${{ steps.temp_dir.outputs.temp_dir }}/.env
+        path: ${{ steps.temp_dir.outputs.temp_dir }}
