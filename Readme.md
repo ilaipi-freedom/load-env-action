@@ -1,68 +1,67 @@
 # Load Environment Variables Action
 
-This GitHub Action loads environment variables from a given string or a GitHub Secret.
+This GitHub Action allows you to load environment variables from either a secret or a provided string content. It creates a temporary `.env` file and loads the variables using the [dotenv action](https://github.com/xom9ikk/dotenv).
+
+## Features
+
+- Load environment variables from a secret or direct string content
+- Priority-based loading: env_content > secret_name
+- Configurable failure mode (strict/skip) when no environment variables are found
+- Creates temporary `.env` file to avoid workspace pollution
+- Supports both strict and skip modes for handling missing environment variables
 
 ## Usage
 
-1.  **Add the Action to your workflow:**
-
-    ```yaml
-    jobs:
-      load_env:
-        runs-on: ubuntu-latest
-        steps:
-          - name: Load environment variables
-            uses: your-username/load-env-vars-action@v1 # Replace with your username and action name
-            with:
-              # env_content: ${{ secrets.MY_ENV_VARS }} # Optional: Specify environment variables directly
-              # secret_name: 'MY_ENV_VARS' # Optional: Specify a different secret name
-          - name: Use loaded variables
-            run: |
-              echo "Loaded variable: $MY_VARIABLE" # Example usage
-    ```
-
-2.  **Set up your GitHub Secret:**
-
-    Create a GitHub Secret (e.g., `ENV` or as specified by `secret_name`) containing your environment variables in the format `KEY=VALUE` (one per line).
+```yaml
+- uses: ilaipi-freedom/load-env-action@v1.0.0
+  with:
+    env_content: |
+      KEY1=value1
+      KEY2=value2
+    secret_name: 'ENV'  # Optional, defaults to 'ENV'
+    load_mode: 'strict' # Optional, defaults to 'strict'
+```
 
 ## Inputs
 
-| Name          | Description                                                                 | Default          | Required |
-| :------------ | :-------------------------------------------------------------------------- | :--------------- | :------- |
-| `env_content` | Content of environment variables, defaults to reading from a secret.        | `${{ secrets.ENV }}` | No       |
-| `secret_name` | Name of the secret to read from if `env_content` is not provided.          | `ENV`            | No       |
+| Name | Description | Required | Default |
+|------|-------------|----------|---------|
+| `env_content` | Content of environment variables, defaults to reading from a secret | false | '' |
+| `secret_name` | Name of the secret to read from if env_content is not provided | false | '' |
+| `load_mode` | Sets whether the program should fail when no env content is found (strict) or continue (skip) | false | 'strict' |
 
-## Notes
+## Outputs
 
-* This Action uses the `xom9ikk/dotenv` Action to load environment variables.
-* The `load-mode: strict` option ensures that all variables are loaded and no errors are ignored.
-* Ensure the secret or `env_content` contains valid `KEY=VALUE` pairs.
+None
 
-## Example
+## Examples
 
-use default `secrets.ENV`：
-
-```yaml
-- name: Load environment variables
-  uses: your-username/load-env-vars-action@v1
-```
-
-use custom secret：
+### Using Secret
 
 ```yaml
-- name: Load environment variables
-  uses: your-username/load-env-vars-action@v1
+- uses: ilaipi-freedom/load-env-action@v1.0.0
   with:
-    secret_name: 'MY_ENV_VARS'
+    secret_name: 'MY_ENV'
 ```
 
-or directly use envs：
+### Using Direct Content
 
 ```yaml
-- name: Load environment variables
-  uses: your-username/load-env-vars-action@v1
+- uses: ilaipi-freedom/load-env-action@v1.0.0
   with:
     env_content: |
-      MY_VARIABLE=value
-      ANOTHER_VARIABLE=another_value
+      API_KEY=123456
+      DB_URL=mongodb://localhost:27017
 ```
+
+### Using Skip Mode
+
+```yaml
+- uses: ilaipi-freedom/load-env-action@v1.0.0
+  with:
+    load_mode: 'skip'
+```
+
+## License
+
+MIT

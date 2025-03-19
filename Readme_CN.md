@@ -1,69 +1,67 @@
 # Load Environment Variables Action
 
-这个 GitHub Action 从给定的字符串或 GitHub Secret 中加载环境变量。
+这个 GitHub Action 允许你从密钥或提供的字符串内容中加载环境变量。它会创建一个临时的 `.env` 文件，并使用 [dotenv action](https://github.com/xom9ikk/dotenv) 加载这些变量。
 
-## 用法
+## 特性
 
-1.  **将 Action 添加到您的 workflow：**
+- 从密钥或直接字符串内容加载环境变量
+- 基于优先级的加载：env_content > secret_name
+- 可配置的失败模式（strict/skip），用于处理未找到环境变量的情况
+- 创建临时的 `.env` 文件以避免污染工作空间
+- 支持严格模式和跳过模式来处理缺失的环境变量
 
-    ```yaml
-    jobs:
-      load_env:
-        runs-on: ubuntu-latest
-        steps:
-          - name: 加载环境变量
-            uses: your-username/load-env-vars-action@v1 # 替换为您的用户名和 action 名称
-            with:
-              # env_content: ${{ secrets.MY_ENV_VARS }} # 可选：直接指定环境变量内容
-              # secret_name: 'MY_ENV_VARS' # 可选：指定不同的 secret 名称
-          - name: 使用加载的环境变量
-            run: |
-              echo "加载的变量: $MY_VARIABLE" # 示例用法
-    ```
+## 使用方法
 
-2.  **设置您的 GitHub Secret：**
-
-    创建一个 GitHub Secret（例如 `ENV` 或由 `secret_name` 指定的名称），其中包含您的环境变量，格式为 `KEY=VALUE`（每行一个）。
+```yaml
+- uses: ilaipi-freedom/load-env-action@v1.0.0
+  with:
+    env_content: |
+      KEY1=value1
+      KEY2=value2
+    secret_name: 'ENV'  # 可选，默认为空字符串
+    load_mode: 'strict' # 可选，默认为 'strict'
+```
 
 ## 输入参数
 
-| 参数名          | 描述                                                                    | 默认值           | 是否必填 |
-| :------------ | :------------------------------------------------------------------------- | :--------------- | :------- |
-| `env_content` | 环境变量的内容，默认为从 secret 中读取。                                     | `${{ secrets.ENV }}` | 否       |
-| `secret_name` | 如果未提供 `env_content`，则从此 secret 读取环境变量。                         | `ENV`            | 否       |
+| 名称 | 描述 | 是否必需 | 默认值 |
+|------|------|----------|--------|
+| `env_content` | 环境变量的内容，默认从密钥中读取 | 否 | '' |
+| `secret_name` | 如果未提供 env_content，则从该密钥中读取 | 否 | 'ENV' |
+| `load_mode` | 设置当未找到环境变量内容时是否失败（strict）或继续（skip） | 否 | 'strict' |
 
-## 注意事项
+## 输出
 
-* 这个 Action 使用 `xom9ikk/dotenv` Action 来加载环境变量。
-* `load-mode: strict` 选项确保加载所有变量，并且不忽略任何错误。
-* 请确保 secret 或 `env_content` 包含有效的 `KEY=VALUE` 对。
+无
 
 ## 示例
 
-
-使用默认的 `secrets.ENV`：
-
-```yaml
-- name: Load environment variables
-  uses: your-username/load-env-vars-action@v1
-```
-
-使用自定义的 secret：
+### 使用密钥
 
 ```yaml
-- name: Load environment variables
-  uses: your-username/load-env-vars-action@v1
+- uses: ilaipi-freedom/load-env-action@v1.0.0
   with:
-    secret_name: 'MY_ENV_VARS'
+    secret_name: 'MY_ENV'
 ```
 
-直接提供环境变量内容：
+### 使用直接内容
 
 ```yaml
-- name: Load environment variables
-  uses: your-username/load-env-vars-action@v1
+- uses: ilaipi-freedom/load-env-action@v1.0.0
   with:
     env_content: |
-      MY_VARIABLE=value
-      ANOTHER_VARIABLE=another_value
+      API_KEY=123456
+      DB_URL=mongodb://localhost:27017
 ```
+
+### 使用跳过模式
+
+```yaml
+- uses: ilaipi-freedom/load-env-action@v1.0.0
+  with:
+    load_mode: 'skip'
+```
+
+## 许可证
+
+MIT
